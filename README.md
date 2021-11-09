@@ -16,14 +16,11 @@ Only mirror stable tag from the offical repo.
 
 	composer require shaozeming/protobuf -v
 
-
-
 ### 项目目的
-> 生成hyperf server interface/client/route register
+> 生成hyperf server interface、grpc client、route register
 
 ### 打包方式
-> 由于 lvht/protobuf依赖pb库与现在项目可能存在冲突，因此使用phar打包方式
->
+> 由于依赖pb库与现在项目可能存在冲突，因此使用phar打包方式
 >
 
 ### 打包项目
@@ -33,6 +30,7 @@ php build.php
 
 ### 使用方式
 ```bash
+
 # 1. 将生成的build目录.phar文件移动到path路径中可执行目录
 
 cp build/protoc-gen-hyperf.phar /usr/local/bin/protoc-gen-hyperf
@@ -48,8 +46,7 @@ protoc --php_out=./sdk/   --hyperf_out=./sdk    helloworld.proto
 # 4. 插件传参(修改clinet基础类):
 # 由于插件的参数是通过--xxx_out参数中传递的key_value类型,以逗号分割,最后一个是生成目录
 
-protoc --php_out=./sdk/   \
---hyperf_out=baseStub=\Youyao\Framework\Client\CoreClient:./sdk    helloworld.proto
+protoc --php_out=./sdk/   --hyperf_out=baseStub=\xxx\CoreClient:./sdk    helloworld.proto
 
 ```
 

@@ -1,0 +1,19 @@
+<?php
+if (is_file(__DIR__ . "/../vendor/autoload.php")) {
+    require_once __DIR__ . "/../vendor/autoload.php";
+}
+
+try {
+    $request = new Google\Protobuf\Internal\CodeGeneratorRequest();
+     $request->mergeFromString(stream_get_contents(STDIN));
+    $response = new Google\Protobuf\Internal\CodeGeneratorResponse();
+
+    $generator = new \My\Generator($request);
+    $files = $generator->generate();
+    $response->setFile($files);
+} catch (\Throwable $e) {
+    $response = new Google\Protobuf\Internal\CodeGeneratorResponse();
+    $response->setError($e->getMessage());
+}
+
+file_put_contents("php://stdout", $response->serializeToString());
