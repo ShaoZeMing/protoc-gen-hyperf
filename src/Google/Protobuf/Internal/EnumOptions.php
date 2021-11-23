@@ -21,8 +21,7 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional bool allow_alias = 2;</code>
      */
-    private $allow_alias = false;
-    private $has_allow_alias = false;
+    protected $allow_alias = null;
     /**
      * Is this enum deprecated?
      * Depending on the target platform, this can emit Deprecated annotations
@@ -31,19 +30,35 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional bool deprecated = 3 [default = false];</code>
      */
-    private $deprecated = false;
-    private $has_deprecated = false;
+    protected $deprecated = null;
     /**
      * The parser stores options it doesn't recognize here. See above.
      *
      * Generated from protobuf field <code>repeated .google.protobuf.UninterpretedOption uninterpreted_option = 999;</code>
      */
     private $uninterpreted_option;
-    private $has_uninterpreted_option = false;
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type bool $allow_alias
+     *           Set this option to true to allow mapping different tag names to the same
+     *           value.
+     *     @type bool $deprecated
+     *           Is this enum deprecated?
+     *           Depending on the target platform, this can emit Deprecated annotations
+     *           for the enum, or it will be completely ignored; in the very least, this
+     *           is a formalization for deprecating enums.
+     *     @type \Google\Protobuf\Internal\UninterpretedOption[]|\Google\Protobuf\Internal\RepeatedField $uninterpreted_option
+     *           The parser stores options it doesn't recognize here. See above.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Internal\Descriptor::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**
@@ -55,7 +70,17 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
      */
     public function getAllowAlias()
     {
-        return $this->allow_alias;
+        return isset($this->allow_alias) ? $this->allow_alias : false;
+    }
+
+    public function hasAllowAlias()
+    {
+        return isset($this->allow_alias);
+    }
+
+    public function clearAllowAlias()
+    {
+        unset($this->allow_alias);
     }
 
     /**
@@ -70,14 +95,8 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->allow_alias = $var;
-        $this->has_allow_alias = true;
 
         return $this;
-    }
-
-    public function hasAllowAlias()
-    {
-        return $this->has_allow_alias;
     }
 
     /**
@@ -91,7 +110,17 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
      */
     public function getDeprecated()
     {
-        return $this->deprecated;
+        return isset($this->deprecated) ? $this->deprecated : false;
+    }
+
+    public function hasDeprecated()
+    {
+        return isset($this->deprecated);
+    }
+
+    public function clearDeprecated()
+    {
+        unset($this->deprecated);
     }
 
     /**
@@ -108,14 +137,8 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->deprecated = $var;
-        $this->has_deprecated = true;
 
         return $this;
-    }
-
-    public function hasDeprecated()
-    {
-        return $this->has_deprecated;
     }
 
     /**
@@ -140,14 +163,8 @@ class EnumOptions extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Google\Protobuf\Internal\UninterpretedOption::class);
         $this->uninterpreted_option = $arr;
-        $this->has_uninterpreted_option = true;
 
         return $this;
-    }
-
-    public function hasUninterpretedOption()
-    {
-        return $this->has_uninterpreted_option;
     }
 
 }

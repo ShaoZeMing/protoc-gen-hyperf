@@ -21,11 +21,21 @@ class UInt32Value extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>uint32 value = 1;</code>
      */
-    private $value = 0;
+    protected $value = 0;
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type int $value
+     *           The uint32 value.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Wrappers::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**

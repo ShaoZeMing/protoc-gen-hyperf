@@ -28,7 +28,7 @@ class Api extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string name = 1;</code>
      */
-    private $name = '';
+    protected $name = '';
     /**
      * The methods of this interface, in unspecified order.
      *
@@ -62,14 +62,14 @@ class Api extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string version = 4;</code>
      */
-    private $version = '';
+    protected $version = '';
     /**
      * Source context for the protocol buffer service represented by this
      * message.
      *
      * Generated from protobuf field <code>.google.protobuf.SourceContext source_context = 5;</code>
      */
-    private $source_context = null;
+    protected $source_context = null;
     /**
      * Included interfaces. See [Mixin][].
      *
@@ -81,11 +81,51 @@ class Api extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>.google.protobuf.Syntax syntax = 7;</code>
      */
-    private $syntax = 0;
+    protected $syntax = 0;
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type string $name
+     *           The fully qualified name of this interface, including package name
+     *           followed by the interface's simple name.
+     *     @type \Google\Protobuf\Method[]|\Google\Protobuf\Internal\RepeatedField $methods
+     *           The methods of this interface, in unspecified order.
+     *     @type \Google\Protobuf\Option[]|\Google\Protobuf\Internal\RepeatedField $options
+     *           Any metadata attached to the interface.
+     *     @type string $version
+     *           A version string for this interface. If specified, must have the form
+     *           `major-version.minor-version`, as in `1.10`. If the minor version is
+     *           omitted, it defaults to zero. If the entire version field is empty, the
+     *           major version is derived from the package name, as outlined below. If the
+     *           field is not empty, the version in the package name will be verified to be
+     *           consistent with what is provided here.
+     *           The versioning schema uses [semantic
+     *           versioning](http://semver.org) where the major version number
+     *           indicates a breaking change and the minor version an additive,
+     *           non-breaking change. Both version numbers are signals to users
+     *           what to expect from different versions, and should be carefully
+     *           chosen based on the product plan.
+     *           The major version is also reflected in the package name of the
+     *           interface, which must end in `v<major-version>`, as in
+     *           `google.feature.v1`. For major versions 0 and 1, the suffix can
+     *           be omitted. Zero major versions must only be used for
+     *           experimental, non-GA interfaces.
+     *     @type \Google\Protobuf\SourceContext $source_context
+     *           Source context for the protocol buffer service represented by this
+     *           message.
+     *     @type \Google\Protobuf\Mixin[]|\Google\Protobuf\Internal\RepeatedField $mixins
+     *           Included interfaces. See [Mixin][].
+     *     @type int $syntax
+     *           The source syntax of the service.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Api::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**
@@ -231,11 +271,21 @@ class Api extends \Google\Protobuf\Internal\Message
      * message.
      *
      * Generated from protobuf field <code>.google.protobuf.SourceContext source_context = 5;</code>
-     * @return \Google\Protobuf\SourceContext
+     * @return \Google\Protobuf\SourceContext|null
      */
     public function getSourceContext()
     {
         return $this->source_context;
+    }
+
+    public function hasSourceContext()
+    {
+        return isset($this->source_context);
+    }
+
+    public function clearSourceContext()
+    {
+        unset($this->source_context);
     }
 
     /**

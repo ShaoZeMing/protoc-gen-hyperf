@@ -24,7 +24,7 @@ class Option extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string name = 1;</code>
      */
-    private $name = '';
+    protected $name = '';
     /**
      * The option's value packed in an Any message. If the value is a primitive,
      * the corresponding wrapper type defined in google/protobuf/wrappers.proto
@@ -33,11 +33,29 @@ class Option extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>.google.protobuf.Any value = 2;</code>
      */
-    private $value = null;
+    protected $value = null;
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type string $name
+     *           The option's name. For protobuf built-in options (options defined in
+     *           descriptor.proto), this is the short name. For example, `"map_entry"`.
+     *           For custom options, it should be the fully-qualified name. For example,
+     *           `"google.api.http"`.
+     *     @type \Google\Protobuf\Any $value
+     *           The option's value packed in an Any message. If the value is a primitive,
+     *           the corresponding wrapper type defined in google/protobuf/wrappers.proto
+     *           should be used. If the value is an enum, it should be stored as an int32
+     *           value using the google.protobuf.Int32Value type.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Type::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**
@@ -79,11 +97,21 @@ class Option extends \Google\Protobuf\Internal\Message
      * value using the google.protobuf.Int32Value type.
      *
      * Generated from protobuf field <code>.google.protobuf.Any value = 2;</code>
-     * @return \Google\Protobuf\Any
+     * @return \Google\Protobuf\Any|null
      */
     public function getValue()
     {
         return $this->value;
+    }
+
+    public function hasValue()
+    {
+        return isset($this->value);
+    }
+
+    public function clearValue()
+    {
+        unset($this->value);
     }
 
     /**

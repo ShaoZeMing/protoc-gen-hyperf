@@ -66,23 +66,36 @@ class Message
     /**
      * @ignore
      */
-    public function __construct($desc = NULL)
+    public function __construct($data = NULL)
     {
         // MapEntry message is shared by all types of map fields, whose
         // descriptors are different from each other. Thus, we cannot find a
         // specific descriptor from the descriptor pool.
-        if (get_class($this) === 'Google\Protobuf\Internal\MapEntry') {
-            $this->desc = $desc;
-            foreach ($desc->getField() as $field) {
-                $setter = $field->getSetter();
-                $this->$setter($this->defaultValue($field));
+        if ($this instanceof MapEntry) {
+            $this->initWithDescriptor($data);
+        } else {
+            $this->initWithGeneratedPool();
+            if (is_array($data)) {
+                $this->mergeFromArray($data);
+            } else if (!empty($data)) {
+                throw new \InvalidArgumentException(
+                    'Message constructor must be an array or null.'
+                );
             }
-            return;
         }
+    }
+
+    /**
+     * @ignore
+     */
+    private function initWithGeneratedPool()
+    {
         $pool = DescriptorPool::getGeneratedPool();
         $this->desc = $pool->getDescriptorByClassName(get_class($this));
         if (is_null($this->desc)) {
-            user_error(get_class($this) . "is not found in descriptor pool.");
+          throw new \InvalidArgumentException(
+            get_class($this) ." is not found in descriptor pool. " .
+            'Only generated classes may derive from Message.');
         }
         foreach ($this->desc->getField() as $field) {
             $setter = $field->getSetter();
@@ -151,6 +164,55 @@ class Message
         }
     }
 
+    /**
+     * @ignore
+     */
+    private function initWithDescriptor(Descriptor $desc)
+    {
+        $this->desc = $desc;
+        foreach ($desc->getField() as $field) {
+            $setter = $field->getSetter();
+            $defaultValue = $this->defaultValue($field);
+            $this->$setter($defaultValue);
+        }
+    }
+
+    protected function readWrapperValue($member)
+    {
+        $field = $this->desc->getFieldByName($member);
+        $oneof_index = $field->getOneofIndex();
+        if ($oneof_index === -1) {
+            $wrapper = $this->$member;
+        } else {
+            $wrapper = $this->readOneof($field->getNumber());
+        }
+
+        if (is_null($wrapper)) {
+            return NULL;
+        } else {
+            return $wrapper->getValue();
+        }
+    }
+
+    protected function writeWrapperValue($member, $value)
+    {
+        $field = $this->desc->getFieldByName($member);
+        $wrapped_value = $value;
+        if (!is_null($value)) {
+            $desc = $field->getMessageType();
+            $klass = $desc->getClass();
+            $wrapped_value = new $klass;
+            $wrapped_value->setValue($value);
+        }
+
+        $oneof_index = $field->getOneofIndex();
+        if ($oneof_index === -1) {
+            $this->$member = $wrapped_value;
+        } else {
+            $this->writeOneof($field->getNumber(), $wrapped_value);
+        }
+    }
+
     protected function readOneof($number)
     {
         $field = $this->desc->getFieldByNumber($number);
@@ -164,15 +226,28 @@ class Message
         }
     }
 
-    protected function writeOneof($number, $value)
+    protected function hasOneof($number)
     {
         $field = $this->desc->getFieldByNumber($number);
         $oneof = $this->desc->getOneofDecl()[$field->getOneofIndex()];
         $oneof_name = $oneof->getName();
         $oneof_field = $this->$oneof_name;
-        $oneof_field->setValue($value);
-        $oneof_field->setFieldName($field->getName());
-        $oneof_field->setNumber($number);
+        return $number === $oneof_field->getNumber();
+    }
+
+    protected function writeOneof($number, $value)
+    {
+        $field = $this->desc->getFieldByNumber($number);
+        $oneof = $this->desc->getOneofDecl()[$field->getOneofIndex()];
+        $oneof_name = $oneof->getName();
+        if ($value === null) {
+            $this->$oneof_name = new OneofField($oneof);
+        } else {
+            $oneof_field = $this->$oneof_name;
+            $oneof_field->setValue($value);
+            $oneof_field->setFieldName($field->getName());
+            $oneof_field->setNumber($number);
+        }
     }
 
     protected function whichOneof($oneof_name)
@@ -619,8 +694,8 @@ class Message
      * This method merges the contents of the specified message into the
      * current message. Singular fields that are set in the specified message
      * overwrite the corresponding fields in the current message.  Repeated
-     * fields are appended. Map fields key-value pairs are overritten.
-     * Singular/Oneof sub-messages are recursively merged. All overritten
+     * fields are appended. Map fields key-value pairs are overwritten.
+     * Singular/Oneof sub-messages are recursively merged. All overwritten
      * sub-messages are deep-copied.
      *
      * @param object $msg Protobuf message to be merged from.
@@ -628,58 +703,58 @@ class Message
      */
     public function mergeFrom($msg)
     {
-      if (get_class($this) !== get_class($msg)) {
-          user_error("Cannot merge messages with different class.");
-          return;
-      }
+        if (get_class($this) !== get_class($msg)) {
+            user_error("Cannot merge messages with different class.");
+            return;
+        }
 
-      foreach ($this->desc->getField() as $field) {
-          $setter = $field->getSetter();
-          $getter = $field->getGetter();
-          if ($field->isMap()) {
-              if (count($msg->$getter()) != 0) {
-                  $value_field = $field->getMessageType()->getFieldByNumber(2);
-                  foreach ($msg->$getter() as $key => $value) {
-                      if ($value_field->getType() == GPBType::MESSAGE) {
-                          $klass = $value_field->getMessageType()->getClass();
-                          $copy = new $klass;
-                          $copy->mergeFrom($value);
+        foreach ($this->desc->getField() as $field) {
+            $setter = $field->getSetter();
+            $getter = $field->getGetter();
+            if ($field->isMap()) {
+                if (count($msg->$getter()) != 0) {
+                    $value_field = $field->getMessageType()->getFieldByNumber(2);
+                    foreach ($msg->$getter() as $key => $value) {
+                        if ($value_field->getType() == GPBType::MESSAGE) {
+                            $klass = $value_field->getMessageType()->getClass();
+                            $copy = new $klass;
+                            $copy->mergeFrom($value);
 
-                          $this->kvUpdateHelper($field, $key, $copy);
-                      } else {
-                          $this->kvUpdateHelper($field, $key, $value);
-                      }
-                  }
-              }
-          } else if ($field->getLabel() === GPBLabel::REPEATED) {
-              if (count($msg->$getter()) != 0) {
-                  foreach ($msg->$getter() as $tmp) {
-                      if ($field->getType() == GPBType::MESSAGE) {
-                          $klass = $field->getMessageType()->getClass();
-                          $copy = new $klass;
-                          $copy->mergeFrom($tmp);
-                          $this->appendHelper($field, $copy);
-                      } else {
-                          $this->appendHelper($field, $tmp);
-                      }
-                  }
-              }
-          } else if ($field->getLabel() === GPBLabel::OPTIONAL) {
-              if($msg->$getter() !== $this->defaultValue($field)) {
-                  $tmp = $msg->$getter();
-                  if ($field->getType() == GPBType::MESSAGE) {
-                      if (is_null($this->$getter())) {
-                          $klass = $field->getMessageType()->getClass();
-                          $new_msg = new $klass;
-                          $this->$setter($new_msg);
-                      }
-                      $this->$getter()->mergeFrom($tmp);
-                  } else {
-                      $this->$setter($tmp);
-                  }
-              }
-          }
-      }
+                            $this->kvUpdateHelper($field, $key, $copy);
+                        } else {
+                            $this->kvUpdateHelper($field, $key, $value);
+                        }
+                    }
+                }
+            } else if ($field->getLabel() === GPBLabel::REPEATED) {
+                if (count($msg->$getter()) != 0) {
+                    foreach ($msg->$getter() as $tmp) {
+                        if ($field->getType() == GPBType::MESSAGE) {
+                            $klass = $field->getMessageType()->getClass();
+                            $copy = new $klass;
+                            $copy->mergeFrom($tmp);
+                            $this->appendHelper($field, $copy);
+                        } else {
+                            $this->appendHelper($field, $tmp);
+                        }
+                    }
+                }
+            } else if ($field->getLabel() === GPBLabel::OPTIONAL) {
+                if($msg->$getter() !== $this->defaultValue($field)) {
+                    $tmp = $msg->$getter();
+                    if ($field->getType() == GPBType::MESSAGE) {
+                        if (is_null($this->$getter())) {
+                            $klass = $field->getMessageType()->getClass();
+                            $new_msg = new $klass;
+                            $this->$setter($new_msg);
+                        }
+                        $this->$getter()->mergeFrom($tmp);
+                    } else {
+                        $this->$setter($tmp);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -692,7 +767,7 @@ class Message
      *
      * @param string $data Binary protobuf data.
      * @return null.
-     * @throws Exception Invalid data.
+     * @throws \Exception Invalid data.
      */
     public function mergeFromString($data)
     {
@@ -710,12 +785,12 @@ class Message
      *
      * @param string $data Json protobuf data.
      * @return null.
-     * @throws Exception Invalid data.
+     * @throws \Exception Invalid data.
      */
-    public function mergeFromJsonString($data)
+    public function mergeFromJsonString($data, $ignore_unknown = false)
     {
         $input = new RawInputStream($data);
-        $this->parseFromJsonStream($input);
+        $this->parseFromJsonStream($input, $ignore_unknown);
     }
 
     /**
@@ -740,6 +815,7 @@ class Message
     private function convertJsonValueToProtoValue(
         $value,
         $field,
+        $ignore_unknown,
         $is_map_key = false)
     {
         switch ($field->getType()) {
@@ -763,7 +839,8 @@ class Message
                     try {
                         $timestamp = GPBUtil::parseTimestamp($value);
                     } catch (\Exception $e) {
-                        throw new GPBDecodeException("Invalid RFC 3339 timestamp: ".$e->getMessage());
+                        throw new GPBDecodeException(
+                            "Invalid RFC 3339 timestamp: ".$e->getMessage());
                     }
 
                     $submsg->setSeconds($timestamp->getSeconds());
@@ -775,7 +852,8 @@ class Message
                     try {
                         return GPBUtil::parseFieldMask($value);
                     } catch (\Exception $e) {
-                        throw new GPBDecodeException("Invalid FieldMask: ".$e->getMessage());
+                        throw new GPBDecodeException(
+                            "Invalid FieldMask: ".$e->getMessage());
                     }
                 } else {
                     if (is_null($value) &&
@@ -786,27 +864,35 @@ class Message
                     } elseif (!is_object($value) && !is_array($value)) {
                         throw new GPBDecodeException("Expect message.");
                     }
-                    $submsg->mergeFromJsonArray($value);
+                    $submsg->mergeFromJsonArray($value, $ignore_unknown);
                 }
                 return $submsg;
             case GPBType::ENUM:
                 if (is_null($value)) {
                     return $this->defaultValue($field);
-                } else if (is_integer($value)) {
-                    return $value;
-                } else {
-                    $enum_value =
-                        $field->getEnumType()->getValueByName($value);
                 }
+                if (is_integer($value)) {
+                    return $value;
+                }
+                $enum_value = $field->getEnumType()->getValueByName($value);
                 if (!is_null($enum_value)) {
                     return $enum_value->getNumber();
+                } else if ($ignore_unknown) {
+                    return $this->defaultValue($field);
+                } else {
+                  throw new GPBDecodeException(
+                          "Enum field only accepts integer or enum value name");
                 }
             case GPBType::STRING:
                 if (is_null($value)) {
                     return $this->defaultValue($field);
                 }
+                if (is_numeric($value)) {
+                    return strval($value);
+                }
                 if (!is_string($value)) {
-                    throw new GPBDecodeException("Expect string");
+                    throw new GPBDecodeException(
+                        "String field only accepts string value");
                 }
                 return $value;
             case GPBType::BYTES:
@@ -814,12 +900,12 @@ class Message
                     return $this->defaultValue($field);
                 }
                 if (!is_string($value)) {
-                    throw new GPBDecodeException("Expect string");
+                    throw new GPBDecodeException(
+                        "Byte field only accepts string value");
                 }
                 $proto_value = base64_decode($value, true);
                 if ($proto_value === false) {
-                    throw new GPBDecodeException(
-                        "Invalid base64 characters");
+                    throw new GPBDecodeException("Invalid base64 characters");
                 }
                 return $proto_value;
             case GPBType::BOOL:
@@ -834,27 +920,14 @@ class Message
                         return false;
                     }
                     throw new GPBDecodeException(
-                        "Bool field only accept bool value");
+                        "Bool field only accepts bool value");
                 }
                 if (!is_bool($value)) {
                     throw new GPBDecodeException(
-                        "Bool field only accept bool value");
+                        "Bool field only accepts bool value");
                 }
                 return $value;
             case GPBType::FLOAT:
-                if (is_null($value)) {
-                    return $this->defaultValue($field);
-                }
-                if ($value === "Infinity") {
-                    return INF;
-                }
-                if ($value === "-Infinity") {
-                    return -INF;
-                }
-                if ($value === "NaN") {
-                    return NAN;
-                }
-                return $value;
             case GPBType::DOUBLE:
                 if (is_null($value)) {
                     return $this->defaultValue($field);
@@ -879,6 +952,10 @@ class Message
                    throw new GPBDecodeException(
                        "Invalid data type for int32 field");
                 }
+                if (is_string($value) && trim($value) !== $value) {
+                   throw new GPBDecodeException(
+                       "Invalid data type for int32 field");
+                }
                 if (bccomp($value, "2147483647") > 0) {
                    throw new GPBDecodeException(
                        "Int32 too large");
@@ -897,6 +974,10 @@ class Message
                    throw new GPBDecodeException(
                        "Invalid data type for uint32 field");
                 }
+                if (is_string($value) && trim($value) !== $value) {
+                   throw new GPBDecodeException(
+                       "Invalid data type for int32 field");
+                }
                 if (bccomp($value, 4294967295) > 0) {
                     throw new GPBDecodeException(
                         "Uint32 too large");
@@ -909,6 +990,10 @@ class Message
                     return $this->defaultValue($field);
                 }
                 if (!is_numeric($value)) {
+                   throw new GPBDecodeException(
+                       "Invalid data type for int64 field");
+                }
+                if (is_string($value) && trim($value) !== $value) {
                    throw new GPBDecodeException(
                        "Invalid data type for int64 field");
                 }
@@ -930,6 +1015,10 @@ class Message
                    throw new GPBDecodeException(
                        "Invalid data type for int64 field");
                 }
+                if (is_string($value) && trim($value) !== $value) {
+                   throw new GPBDecodeException(
+                       "Invalid data type for int64 field");
+                }
                 if (bccomp($value, "18446744073709551615") > 0) {
                     throw new GPBDecodeException(
                         "Uint64 too large");
@@ -943,17 +1032,128 @@ class Message
         }
     }
 
-    protected function mergeFromJsonArray($array)
+    /**
+     * Populates the message from a user-supplied PHP array. Array keys
+     * correspond to Message properties and nested message properties.
+     *
+     * Example:
+     * ```
+     * $message->mergeFromArray([
+     *     'name' => 'This is a message name',
+     *     'interval' => [
+     *          'startTime' => time() - 60,
+     *          'endTime' => time(),
+     *     ]
+     * ]);
+     * ```
+     *
+     * This method will trigger an error if it is passed data that cannot
+     * be converted to the correct type. For example, a StringValue field
+     * must receive data that is either a string or a StringValue object.
+     *
+     * @param array $array An array containing message properties and values.
+     * @return null.
+     */
+    protected function mergeFromArray(array $array)
+    {
+        // Just call the setters for the field names
+        foreach ($array as $key => $value) {
+            $field = $this->desc->getFieldByName($key);
+            if (is_null($field)) {
+                throw new \UnexpectedValueException(
+                    'Invalid message property: ' . $key);
+            }
+            $setter = $field->getSetter();
+            if ($field->isMap()) {
+                $valueField = $field->getMessageType()->getFieldByName('value');
+                if (!is_null($valueField) && $valueField->isWrapperType()) {
+                    self::normalizeArrayElementsToMessageType($value, $valueField->getMessageType()->getClass());
+                }
+            } elseif ($field->isWrapperType()) {
+                $class = $field->getMessageType()->getClass();
+                if ($field->isRepeated()) {
+                    self::normalizeArrayElementsToMessageType($value, $class);
+                } else {
+                    self::normalizeToMessageType($value, $class);
+                }
+            }
+            $this->$setter($value);
+        }
+    }
+
+    /**
+     * Tries to normalize the elements in $value into a provided protobuf
+     * wrapper type $class. If $value is any type other than array, we do
+     * not do any conversion, and instead rely on the existing protobuf
+     * type checking. If $value is an array, we process each element and
+     * try to convert it to an instance of $class.
+     *
+     * @param mixed $value The array of values to normalize.
+     * @param string $class The expected wrapper class name
+     */
+    private static function normalizeArrayElementsToMessageType(&$value, $class)
+    {
+        if (!is_array($value)) {
+            // In the case that $value is not an array, we do not want to
+            // attempt any conversion. Note that this includes the cases
+            // when $value is a RepeatedField of MapField. In those cases,
+            // we do not need to convert the elements, as they should
+            // already be the correct types.
+            return;
+        } else {
+            // Normalize each element in the array.
+            foreach ($value as $key => &$elementValue) {
+              self::normalizeToMessageType($elementValue, $class);
+            }
+        }
+    }
+
+    /**
+     * Tries to normalize $value into a provided protobuf wrapper type $class.
+     * If $value is any type other than an object, we attempt to construct an
+     * instance of $class and assign $value to it using the setValue method
+     * shared by all wrapper types.
+     *
+     * This method will raise an error if it receives a type that cannot be
+     * assigned to the wrapper type via setValue.
+     *
+     * @param mixed $value The value to normalize.
+     * @param string $class The expected wrapper class name
+     */
+    private static function normalizeToMessageType(&$value, $class)
+    {
+        if (is_null($value) || is_object($value)) {
+            // This handles the case that $value is an instance of $class. We
+            // choose not to do any more strict checking here, relying on the
+            // existing type checking done by GPBUtil.
+            return;
+        } else {
+            // Try to instantiate $class and set the value
+            try {
+                $msg = new $class;
+                $msg->setValue($value);
+                $value = $msg;
+                return;
+            } catch (\Exception $exception) {
+                trigger_error(
+                    "Error normalizing value to type '$class': " . $exception->getMessage(),
+                    E_USER_ERROR
+                );
+            }
+        }
+    }
+
+    protected function mergeFromJsonArray($array, $ignore_unknown)
     {
         if (is_a($this, "Google\Protobuf\Any")) {
             $this->clear();
             $this->setTypeUrl($array["@type"]);
             $msg = $this->unpack();
             if (GPBUtil::hasSpecialJsonMapping($msg)) {
-                $msg->mergeFromJsonArray($array["value"]);
+                $msg->mergeFromJsonArray($array["value"], $ignore_unknown);
             } else {
                 unset($array["@type"]);
-                $msg->mergeFromJsonArray($array);
+                $msg->mergeFromJsonArray($array, $ignore_unknown);
             }
             $this->setValue($msg->serializeToString());
             return;
@@ -989,9 +1189,10 @@ class Message
             $fields = $this->getFields();
             foreach($array as $key => $value) {
                 $v = new Value();
-                $v->mergeFromJsonArray($value);
+                $v->mergeFromJsonArray($value, $ignore_unknown);
                 $fields[$key] = $v;
             }
+            return;
         }
         if (is_a($this, "Google\Protobuf\Value")) {
             if (is_bool($array)) {
@@ -1012,7 +1213,7 @@ class Message
                     }
                     foreach ($array as $key => $v) {
                         $value = new Value();
-                        $value->mergeFromJsonArray($v);
+                        $value->mergeFromJsonArray($v, $ignore_unknown);
                         $values = $struct_value->getFields();
                         $values[$key]= $value;
                     }
@@ -1025,7 +1226,7 @@ class Message
                     }
                     foreach ($array as $v) {
                         $value = new Value();
-                        $value->mergeFromJsonArray($v);
+                        $value->mergeFromJsonArray($v, $ignore_unknown);
                         $values = $list_value->getValues();
                         $values[]= $value;
                     }
@@ -1035,15 +1236,25 @@ class Message
             }
             return;
         }
+        $this->mergeFromArrayJsonImpl($array, $ignore_unknown);
+    }
+
+    private function mergeFromArrayJsonImpl($array, $ignore_unknown)
+    {
         foreach ($array as $key => $value) {
             $field = $this->desc->getFieldByJsonName($key);
             if (is_null($field)) {
                 $field = $this->desc->getFieldByName($key);
                 if (is_null($field)) {
-                    continue;
+                    if ($ignore_unknown) {
+                        continue;
+                    } else {
+                        throw new GPBDecodeException(
+                            $key . ' is unknown.'
+                        );
+                    }
                 }
             }
-            $setter = $field->getSetter();
             if ($field->isMap()) {
                 if (is_null($value)) {
                     continue;
@@ -1055,15 +1266,15 @@ class Message
                         throw new \Exception(
                             "Map value field element cannot be null.");
                     }
-                    $proto_key =
-                        $this->convertJsonValueToProtoValue(
-                            $tmp_key,
-                            $key_field,
-                            true);
-                    $proto_value =
-                        $this->convertJsonValueToProtoValue(
-                            $tmp_value,
-                            $value_field);
+                    $proto_key = $this->convertJsonValueToProtoValue(
+                        $tmp_key,
+                        $key_field,
+                        $ignore_unknown,
+                        true);
+                    $proto_value = $this->convertJsonValueToProtoValue(
+                        $tmp_value,
+                        $value_field,
+                        $ignore_unknown);
                     self::kvUpdateHelper($field, $proto_key, $proto_value);
                 }
             } else if ($field->isRepeated()) {
@@ -1075,14 +1286,18 @@ class Message
                         throw new \Exception(
                             "Repeated field elements cannot be null.");
                     }
-                    $proto_value =
-                        $this->convertJsonValueToProtoValue($tmp, $field);
+                    $proto_value = $this->convertJsonValueToProtoValue(
+                        $tmp,
+                        $field,
+                        $ignore_unknown);
                     self::appendHelper($field, $proto_value);
                 }
             } else {
                 $setter = $field->getSetter();
-                $proto_value =
-                    $this->convertJsonValueToProtoValue($value, $field);
+                $proto_value = $this->convertJsonValueToProtoValue(
+                    $value,
+                    $field,
+                    $ignore_unknown);
                 if ($field->getType() === GPBType::MESSAGE) {
                     if (is_null($proto_value)) {
                         continue;
@@ -1102,15 +1317,23 @@ class Message
     /**
      * @ignore
      */
-    public function parseFromJsonStream($input)
+    public function parseFromJsonStream($input, $ignore_unknown)
     {
-        $array = json_decode($input->getData(), JSON_BIGINT_AS_STRING);
+        $array = json_decode($input->getData(), true, 512, JSON_BIGINT_AS_STRING);
+        if ($this instanceof \Google\Protobuf\ListValue) {
+            $array = ["values"=>$array];
+        }
         if (is_null($array)) {
-            throw new GPBDecodeException(
-                "Cannot decode json string.");
+            if ($this instanceof \Google\Protobuf\Value) {
+              $this->setNullValue(\Google\Protobuf\NullValue::NULL_VALUE);
+              return;
+            } else {
+              throw new GPBDecodeException(
+                  "Cannot decode json string: " . $input->getData());
+            }
         }
         try {
-            $this->mergeFromJsonArray($array);
+            $this->mergeFromJsonArray($array, $ignore_unknown);
         } catch (\Exception $e) {
             throw new GPBDecodeException($e->getMessage());
         }
@@ -1286,6 +1509,24 @@ class Message
             $timestamp = GPBUtil::formatTimestamp($this);
             $timestamp = json_encode($timestamp);
             $output->writeRaw($timestamp, strlen($timestamp));
+        } elseif (get_class($this) === 'Google\Protobuf\ListValue') {
+            $field = $this->desc->getField()[1];
+            if (!$this->existField($field)) {
+                $output->writeRaw("[]", 2);
+            } else {
+                if (!$this->serializeFieldToJsonStream($output, $field)) {
+                    return false;
+                }
+            }
+        } elseif (get_class($this) === 'Google\Protobuf\Struct') {
+            $field = $this->desc->getField()[1];
+            if (!$this->existField($field)) {
+                $output->writeRaw("{}", 2);
+            } else {
+                if (!$this->serializeFieldToJsonStream($output, $field)) {
+                    return false;
+                }
+            }
         } else {
             if (!GPBUtil::hasSpecialJsonMapping($this)) {
                 $output->writeRaw("{", 1);
@@ -1339,14 +1580,19 @@ class Message
      */
     private function existField($field)
     {
-        $oneof_index = $field->getOneofIndex();
-        if ($oneof_index !== -1) {
-            $oneof = $this->desc->getOneofDecl()[$oneof_index];
-            $oneof_name = $oneof->getName();
-            return $this->$oneof_name->getNumber() === $field->getNumber();
+        $getter = $field->getGetter();
+        $hazzer = "has" . substr($getter, 3);
+
+        if (method_exists($this, $hazzer)) {
+          return $this->$hazzer();
+        } else if ($field->getOneofIndex() !== -1) {
+          // For old generated code, which does not have hazzers for oneof
+          // fields.
+          $oneof = $this->desc->getOneofDecl()[$field->getOneofIndex()];
+          $oneof_name = $oneof->getName();
+          return $this->$oneof_name->getNumber() === $field->getNumber();
         }
 
-        $getter = $field->getGetter();
         $values = $this->$getter();
         if ($field->isMap()) {
             return count($values) !== 0;
@@ -1747,6 +1993,24 @@ class Message
             $timestamp = GPBUtil::formatTimestamp($this);
             $timestamp = json_encode($timestamp);
             $size += strlen($timestamp);
+        } elseif (get_class($this) === 'Google\Protobuf\ListValue') {
+            $field = $this->desc->getField()[1];
+            if ($this->existField($field)) {
+                $field_size = $this->fieldJsonByteSize($field);
+                $size += $field_size;
+            } else {
+                // Size for "[]".
+                $size += 2;
+            }
+        } elseif (get_class($this) === 'Google\Protobuf\Struct') {
+            $field = $this->desc->getField()[1];
+            if ($this->existField($field)) {
+                $field_size = $this->fieldJsonByteSize($field);
+                $size += $field_size;
+            } else {
+                // Size for "{}".
+                $size += 2;
+            }
         } else {
             if (!GPBUtil::hasSpecialJsonMapping($this)) {
                 // Size for "{}".

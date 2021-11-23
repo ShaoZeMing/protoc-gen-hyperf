@@ -21,11 +21,21 @@ class StringValue extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string value = 1;</code>
      */
-    private $value = '';
+    protected $value = '';
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type string $value
+     *           The string value.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Wrappers::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**

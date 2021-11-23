@@ -23,8 +23,7 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional .google.protobuf.FieldOptions.CType ctype = 1 [default = STRING];</code>
      */
-    private $ctype = 0;
-    private $has_ctype = false;
+    protected $ctype = null;
     /**
      * The packed option can be enabled for repeated primitive fields to enable
      * a more efficient representation on the wire. Rather than repeatedly
@@ -34,8 +33,7 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional bool packed = 2;</code>
      */
-    private $packed = false;
-    private $has_packed = false;
+    protected $packed = null;
     /**
      * The jstype option determines the JavaScript type used for values of the
      * field.  The option is permitted only for 64 bit integral and fixed types
@@ -50,8 +48,7 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional .google.protobuf.FieldOptions.JSType jstype = 6 [default = JS_NORMAL];</code>
      */
-    private $jstype = 0;
-    private $has_jstype = false;
+    protected $jstype = null;
     /**
      * Should this field be parsed lazily?  Lazy applies only to message-type
      * fields.  It means that when the outer message is initially parsed, the
@@ -80,8 +77,7 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional bool lazy = 5 [default = false];</code>
      */
-    private $lazy = false;
-    private $has_lazy = false;
+    protected $lazy = null;
     /**
      * Is this field deprecated?
      * Depending on the target platform, this can emit Deprecated annotations
@@ -90,26 +86,87 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>optional bool deprecated = 3 [default = false];</code>
      */
-    private $deprecated = false;
-    private $has_deprecated = false;
+    protected $deprecated = null;
     /**
      * For Google-internal migration only. Do not use.
      *
      * Generated from protobuf field <code>optional bool weak = 10 [default = false];</code>
      */
-    private $weak = false;
-    private $has_weak = false;
+    protected $weak = null;
     /**
      * The parser stores options it doesn't recognize here. See above.
      *
      * Generated from protobuf field <code>repeated .google.protobuf.UninterpretedOption uninterpreted_option = 999;</code>
      */
     private $uninterpreted_option;
-    private $has_uninterpreted_option = false;
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type int $ctype
+     *           The ctype option instructs the C++ code generator to use a different
+     *           representation of the field than it normally would.  See the specific
+     *           options below.  This option is not yet implemented in the open source
+     *           release -- sorry, we'll try to include it in a future version!
+     *     @type bool $packed
+     *           The packed option can be enabled for repeated primitive fields to enable
+     *           a more efficient representation on the wire. Rather than repeatedly
+     *           writing the tag and type for each element, the entire array is encoded as
+     *           a single length-delimited blob. In proto3, only explicit setting it to
+     *           false will avoid using packed encoding.
+     *     @type int $jstype
+     *           The jstype option determines the JavaScript type used for values of the
+     *           field.  The option is permitted only for 64 bit integral and fixed types
+     *           (int64, uint64, sint64, fixed64, sfixed64).  A field with jstype JS_STRING
+     *           is represented as JavaScript string, which avoids loss of precision that
+     *           can happen when a large value is converted to a floating point JavaScript.
+     *           Specifying JS_NUMBER for the jstype causes the generated JavaScript code to
+     *           use the JavaScript "number" type.  The behavior of the default option
+     *           JS_NORMAL is implementation dependent.
+     *           This option is an enum to permit additional types to be added, e.g.
+     *           goog.math.Integer.
+     *     @type bool $lazy
+     *           Should this field be parsed lazily?  Lazy applies only to message-type
+     *           fields.  It means that when the outer message is initially parsed, the
+     *           inner message's contents will not be parsed but instead stored in encoded
+     *           form.  The inner message will actually be parsed when it is first accessed.
+     *           This is only a hint.  Implementations are free to choose whether to use
+     *           eager or lazy parsing regardless of the value of this option.  However,
+     *           setting this option true suggests that the protocol author believes that
+     *           using lazy parsing on this field is worth the additional bookkeeping
+     *           overhead typically needed to implement it.
+     *           This option does not affect the public interface of any generated code;
+     *           all method signatures remain the same.  Furthermore, thread-safety of the
+     *           interface is not affected by this option; const methods remain safe to
+     *           call from multiple threads concurrently, while non-const methods continue
+     *           to require exclusive access.
+     *           Note that implementations may choose not to check required fields within
+     *           a lazy sub-message.  That is, calling IsInitialized() on the outer message
+     *           may return true even if the inner message has missing required fields.
+     *           This is necessary because otherwise the inner message would have to be
+     *           parsed in order to perform the check, defeating the purpose of lazy
+     *           parsing.  An implementation which chooses not to check required fields
+     *           must be consistent about it.  That is, for any particular sub-message, the
+     *           implementation must either *always* check its required fields, or *never*
+     *           check its required fields, regardless of whether or not the message has
+     *           been parsed.
+     *     @type bool $deprecated
+     *           Is this field deprecated?
+     *           Depending on the target platform, this can emit Deprecated annotations
+     *           for accessors, or it will be completely ignored; in the very least, this
+     *           is a formalization for deprecating fields.
+     *     @type bool $weak
+     *           For Google-internal migration only. Do not use.
+     *     @type \Google\Protobuf\Internal\UninterpretedOption[]|\Google\Protobuf\Internal\RepeatedField $uninterpreted_option
+     *           The parser stores options it doesn't recognize here. See above.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Internal\Descriptor::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**
@@ -123,7 +180,17 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function getCtype()
     {
-        return $this->ctype;
+        return isset($this->ctype) ? $this->ctype : 0;
+    }
+
+    public function hasCtype()
+    {
+        return isset($this->ctype);
+    }
+
+    public function clearCtype()
+    {
+        unset($this->ctype);
     }
 
     /**
@@ -138,16 +205,10 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function setCtype($var)
     {
-        GPBUtil::checkEnum($var, \Google\Protobuf\Internal\FieldOptions_CType::class);
+        GPBUtil::checkEnum($var, \Google\Protobuf\Internal\FieldOptions\CType::class);
         $this->ctype = $var;
-        $this->has_ctype = true;
 
         return $this;
-    }
-
-    public function hasCtype()
-    {
-        return $this->has_ctype;
     }
 
     /**
@@ -162,7 +223,17 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function getPacked()
     {
-        return $this->packed;
+        return isset($this->packed) ? $this->packed : false;
+    }
+
+    public function hasPacked()
+    {
+        return isset($this->packed);
+    }
+
+    public function clearPacked()
+    {
+        unset($this->packed);
     }
 
     /**
@@ -180,14 +251,8 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->packed = $var;
-        $this->has_packed = true;
 
         return $this;
-    }
-
-    public function hasPacked()
-    {
-        return $this->has_packed;
     }
 
     /**
@@ -207,7 +272,17 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function getJstype()
     {
-        return $this->jstype;
+        return isset($this->jstype) ? $this->jstype : 0;
+    }
+
+    public function hasJstype()
+    {
+        return isset($this->jstype);
+    }
+
+    public function clearJstype()
+    {
+        unset($this->jstype);
     }
 
     /**
@@ -228,16 +303,10 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function setJstype($var)
     {
-        GPBUtil::checkEnum($var, \Google\Protobuf\Internal\FieldOptions_JSType::class);
+        GPBUtil::checkEnum($var, \Google\Protobuf\Internal\FieldOptions\JSType::class);
         $this->jstype = $var;
-        $this->has_jstype = true;
 
         return $this;
-    }
-
-    public function hasJstype()
-    {
-        return $this->has_jstype;
     }
 
     /**
@@ -271,7 +340,17 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function getLazy()
     {
-        return $this->lazy;
+        return isset($this->lazy) ? $this->lazy : false;
+    }
+
+    public function hasLazy()
+    {
+        return isset($this->lazy);
+    }
+
+    public function clearLazy()
+    {
+        unset($this->lazy);
     }
 
     /**
@@ -308,14 +387,8 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->lazy = $var;
-        $this->has_lazy = true;
 
         return $this;
-    }
-
-    public function hasLazy()
-    {
-        return $this->has_lazy;
     }
 
     /**
@@ -329,7 +402,17 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function getDeprecated()
     {
-        return $this->deprecated;
+        return isset($this->deprecated) ? $this->deprecated : false;
+    }
+
+    public function hasDeprecated()
+    {
+        return isset($this->deprecated);
+    }
+
+    public function clearDeprecated()
+    {
+        unset($this->deprecated);
     }
 
     /**
@@ -346,14 +429,8 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->deprecated = $var;
-        $this->has_deprecated = true;
 
         return $this;
-    }
-
-    public function hasDeprecated()
-    {
-        return $this->has_deprecated;
     }
 
     /**
@@ -364,7 +441,17 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
      */
     public function getWeak()
     {
-        return $this->weak;
+        return isset($this->weak) ? $this->weak : false;
+    }
+
+    public function hasWeak()
+    {
+        return isset($this->weak);
+    }
+
+    public function clearWeak()
+    {
+        unset($this->weak);
     }
 
     /**
@@ -378,14 +465,8 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->weak = $var;
-        $this->has_weak = true;
 
         return $this;
-    }
-
-    public function hasWeak()
-    {
-        return $this->has_weak;
     }
 
     /**
@@ -410,14 +491,8 @@ class FieldOptions extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Google\Protobuf\Internal\UninterpretedOption::class);
         $this->uninterpreted_option = $arr;
-        $this->has_uninterpreted_option = true;
 
         return $this;
-    }
-
-    public function hasUninterpretedOption()
-    {
-        return $this->has_uninterpreted_option;
     }
 
 }

@@ -2,9 +2,9 @@
   "name": "shaozeming/protobuf",
   "type": "library",
   "description": "proto library for PHP",
-  "keywords": ["proto"],
+  "keywords": ["proto","hyperf"],
   "homepage": "https://developers.google.com/protocol-buffers/",
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "require": {
     "php": ">=7.0"
   },

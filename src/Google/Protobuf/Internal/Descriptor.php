@@ -44,6 +44,7 @@ class Descriptor
     private $nested_type = [];
     private $enum_type = [];
     private $klass;
+    private $legacy_klass;
     private $options;
     private $oneof_decl = [];
 
@@ -151,6 +152,16 @@ class Descriptor
         return $this->klass;
     }
 
+    public function setLegacyClass($klass)
+    {
+        $this->legacy_klass = $klass;
+    }
+
+    public function getLegacyClass()
+    {
+        return $this->legacy_klass;
+    }
+
     public function setOptions($options)
     {
         $this->options = $options;
@@ -167,6 +178,7 @@ class Descriptor
 
         $message_name_without_package  = "";
         $classname = "";
+        $legacy_classname = "";
         $fullname = "";
         GPBUtil::getFullClassName(
             $proto,
@@ -174,9 +186,11 @@ class Descriptor
             $file_proto,
             $message_name_without_package,
             $classname,
+            $legacy_classname,
             $fullname);
         $desc->setFullName($fullname);
         $desc->setClass($classname);
+        $desc->setLegacyClass($legacy_classname);
         $desc->setOptions($proto->getOptions());
 
         foreach ($proto->getField() as $field_proto) {

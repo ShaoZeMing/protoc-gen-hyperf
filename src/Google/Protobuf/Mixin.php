@@ -46,7 +46,7 @@ use Google\Protobuf\Internal\GPBUtil;
  * The mixin construct implies that all methods in `AccessControl` are
  * also declared with same name and request/response types in
  * `Storage`. A documentation generator or annotation processor will
- * see the effective `Storage.GetAcl` method after inherting
+ * see the effective `Storage.GetAcl` method after inheriting
  * documentation and annotations as follows:
  *     service Storage {
  *       // Get the underlying ACL object.
@@ -81,18 +81,31 @@ class Mixin extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string name = 1;</code>
      */
-    private $name = '';
+    protected $name = '';
     /**
      * If non-empty specifies a path under which inherited HTTP paths
      * are rooted.
      *
      * Generated from protobuf field <code>string root = 2;</code>
      */
-    private $root = '';
+    protected $root = '';
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type string $name
+     *           The fully qualified name of the interface which is included.
+     *     @type string $root
+     *           If non-empty specifies a path under which inherited HTTP paths
+     *           are rooted.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Api::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**

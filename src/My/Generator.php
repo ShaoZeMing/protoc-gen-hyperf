@@ -4,8 +4,8 @@ namespace My;
 
 use Google\Protobuf\Field;
 use Google\Protobuf\GPBEmpty;
-use Google\Protobuf\Internal\CodeGeneratorRequest;
-use Google\Protobuf\Internal\CodeGeneratorResponse_File as File;
+use Google\Protobuf\Compiler\CodeGeneratorRequest;
+use Google\Protobuf\Compiler\CodeGeneratorResponse_File as File;
 use Google\Protobuf\Internal\FileDescriptor;
 use Google\Protobuf\Internal\FileDescriptorProto;
 use Google\Protobuf\Internal\GPBWire;

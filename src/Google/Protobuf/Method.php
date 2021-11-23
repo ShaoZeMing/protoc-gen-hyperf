@@ -20,31 +20,31 @@ class Method extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>string name = 1;</code>
      */
-    private $name = '';
+    protected $name = '';
     /**
      * A URL of the input message type.
      *
      * Generated from protobuf field <code>string request_type_url = 2;</code>
      */
-    private $request_type_url = '';
+    protected $request_type_url = '';
     /**
      * If true, the request is streamed.
      *
      * Generated from protobuf field <code>bool request_streaming = 3;</code>
      */
-    private $request_streaming = false;
+    protected $request_streaming = false;
     /**
      * The URL of the output message type.
      *
      * Generated from protobuf field <code>string response_type_url = 4;</code>
      */
-    private $response_type_url = '';
+    protected $response_type_url = '';
     /**
      * If true, the response is streamed.
      *
      * Generated from protobuf field <code>bool response_streaming = 5;</code>
      */
-    private $response_streaming = false;
+    protected $response_streaming = false;
     /**
      * Any metadata attached to the method.
      *
@@ -56,11 +56,33 @@ class Method extends \Google\Protobuf\Internal\Message
      *
      * Generated from protobuf field <code>.google.protobuf.Syntax syntax = 7;</code>
      */
-    private $syntax = 0;
+    protected $syntax = 0;
 
-    public function __construct() {
+    /**
+     * Constructor.
+     *
+     * @param array $data {
+     *     Optional. Data for populating the Message object.
+     *
+     *     @type string $name
+     *           The simple name of this method.
+     *     @type string $request_type_url
+     *           A URL of the input message type.
+     *     @type bool $request_streaming
+     *           If true, the request is streamed.
+     *     @type string $response_type_url
+     *           The URL of the output message type.
+     *     @type bool $response_streaming
+     *           If true, the response is streamed.
+     *     @type \Google\Protobuf\Option[]|\Google\Protobuf\Internal\RepeatedField $options
+     *           Any metadata attached to the method.
+     *     @type int $syntax
+     *           The source syntax of this method.
+     * }
+     */
+    public function __construct($data = NULL) {
         \GPBMetadata\Google\Protobuf\Api::initOnce();
-        parent::__construct();
+        parent::__construct($data);
     }
 
     /**
