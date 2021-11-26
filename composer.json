@@ -1,0 +1,21 @@
+{
+  "name": "shaozeming/protobuf",
+  "type": "library",
+  "description": "proto library for PHP",
+  "keywords": ["proto","hyperf"],
+  "homepage": "https://developers.google.com/protocol-buffers/",
+  "license": "MIT",
+  "require": {
+    "php": ">=7.0"
+  },
+  "suggest": {
+    "ext-bcmath": "Need to support JSON deserialization"
+  },
+  "autoload": {
+    "psr-4": {
+      "Google\\Protobuf\\": "src/Google/Protobuf",
+      "My\\": "src/My",
+      "GPBMetadata\\Google\\Protobuf\\": "src/GPBMetadata/Google/Protobuf"
+    }
+  }
+}
