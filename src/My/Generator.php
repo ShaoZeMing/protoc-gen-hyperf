@@ -5,14 +5,14 @@ namespace My;
 use Google\Protobuf\Field;
 use Google\Protobuf\GPBEmpty;
 use Google\Protobuf\Compiler\CodeGeneratorRequest;
-use Google\Protobuf\Compiler\CodeGeneratorResponse_File as File;
+use Google\Protobuf\Compiler\CodeGeneratorResponse\File as File;
 use Google\Protobuf\Internal\FileDescriptor;
-use Google\Protobuf\Internal\FileDescriptorProto;
+use Google\Protobuf\FileDescriptorProto;
 use Google\Protobuf\Internal\GPBWire;
 use Google\Protobuf\Internal\MethodDescriptorProto as MethodDescriptor;
-use Google\Protobuf\Internal\ServiceDescriptorProto;
-use Google\Protobuf\Internal\ServiceDescriptorProto as ServiceDescriptor;
-use Google\Protobuf\Internal\SourceCodeInfo_Location;
+use Google\Protobuf\ServiceDescriptorProto;
+use Google\Protobuf\ServiceDescriptorProto as ServiceDescriptor;
+use Google\Protobuf\SourceCodeInfo_Location;
 
 class Generator
 {
@@ -27,13 +27,11 @@ class Generator
 
     private $namespace;
 
-    private $interfacePrefix = "Interface";
+    private $interfacePrefix = "GrpcInterface";
 
-    private $registerPrefix = "Register";
+    private $registerPrefix = "GrpcRoute";
 
-    private $clietStubPrefix = "Client";
-
-    private $clientTrait = "ClientTrait";
+    private $clietStubPrefix = "GrpcClient";
 
     private $baseNamespace = '';
 
@@ -65,25 +63,27 @@ class Generator
     {
         $all_files = [];
         /** @var FileDescriptorProto $file */
-         foreach ($this->request->getProtoFile() as $file) {
-             $this->comments = $this->extractComments($file);
-             $this->setNameSpace($file);
-             /** @var ServiceDescriptorProto $service */
-             foreach ($file->getService() as $index => $service) {
-                 $files = $this->generateFilesForService($file, $service, $index);
-                 $all_files = array_merge($all_files, $files);
-             }
+        foreach ($this->request->getProtoFile() as $file) {
+            $this->comments = $this->extractComments($file);
+            $this->setNameSpace($file);
+            /** @var ServiceDescriptorProto $service */
+            foreach ($file->getService() as $index => $service) {
+                $files = $this->generateFilesForService($file, $service, $index);
+                $all_files = array_merge($all_files, $files);
+            }
 
-         }
+        }
         return $all_files;
     }
 
     private function setNameSpace(FileDescriptorProto $file)
     {
-        $phpNameSpaceOption = $file->getOptions()->getPhpNamespace();
-        if ($phpNameSpaceOption) {  //有全局空间，直接使用
-            $this->namespace = $phpNameSpaceOption;
-            return;
+        if($file->getOptions()){
+            $phpNameSpaceOption = $file->getOptions()->getPhpNamespace();
+            if ($phpNameSpaceOption) {  //有全局空间，直接使用
+                $this->namespace = $phpNameSpaceOption;
+                return;
+            }
         }
 
         $this->namespace = str_replace('.', "\\", ucwords($file->getPackage(), '.'));
@@ -238,13 +238,11 @@ class Generator
         $ucServiceName = ucwords($service_name);
         $interfaceName = $ucServiceName . $this->interfacePrefix;
         $package = $file->getPackage();
-
         $p = [$this, 'e']; $in = [$this, 'in']; $out = [$this, 'out'];
         $serviceCommentLines = $this->generateComment("6,$serviceIndex");
 
         ob_start();
         $this->generateHeader($proto_path, $this->namespace);
-
         if ($serviceCommentLines) {
             $p("/**");
             foreach ($serviceCommentLines as $line) {
@@ -252,16 +250,15 @@ class Generator
             }
             $p(" */");
         }
-        $p("class {$ucServiceName}{$this->clietStubPrefix} extends {$this->baseStub}  implements {$ucServiceName}Interface") ;
+        $p("class {$ucServiceName}{$this->clietStubPrefix} extends {$this->baseStub}  implements {$interfaceName}") ;
         $p("{");
-        $trait = 'use \\'. substr($this->namespace,0,strrpos($this->namespace,'\\'))."\\".$this->clientTrait.";";
-        $p($trait);
         $in();
+        $p($this->construct($package));
+        $p();
 
         /** @var MethodDescriptor $method */
         foreach ($service->getMethod() as $methodIndex => $method) {
             $method_name = $method->getName();
-
             //处理类型前面的命名空间
             $input_type = $this->packageToNamespace($method->getInputType());
             $output_type = $this->packageToNamespace($method->getOutputType());
@@ -356,6 +353,44 @@ class Generator
     }
 eof;
     }
+
+
+    private function construct($package)
+    {
+        $packageName = explode(".",$package)[1]??"ExampleService";
+        $arr = preg_split("/(?=[A-Z])/", $packageName);
+        foreach ($arr as $k => $item){
+            if (!$item) {
+                unset($arr[$k]);
+                continue;
+            }
+            $arr[$k] = strtolower($item);
+        }
+        $str = implode('_',$arr);
+
+        return  <<<eof
+/**
+     * 利用配置文件初始化client
+     * @param string \$hostname
+     * @param array \$options
+     */
+    public function __construct(string \$hostname = "", array \$options = [])
+    {
+        if (function_exists("config")) {
+            if (!\$hostname) {
+                \$hostname = config("grpc.$str.host", '');
+            }
+            \$options['timeout'] = \$options['timeout'] ?? intval(config("grpc.$str.timeout", 3));
+
+            if (!\$hostname) {
+                throw new \Exception('host不能为空,请检查配置config/autoload/grpc.php文件中的:[$str]的配置');
+            }
+        }
+        parent::__construct(\$hostname, \$options);
+    }
+eof;
+    }
+
 
     private function clientStream($replyClass, $package, $serviceName, $methodName, array $commentLines = [])
     {
@@ -495,10 +530,10 @@ eof;
      * @param $package
      * @return string|string[]
      */
-     private function packageToNamespace($package)
+    private function packageToNamespace($package)
     {
         //TODO: 先特殊处理吧，想到办法再解决
-        if ($package == '.google.protobuf.Empty') {
+        if ($package == '.hyperf.protobuf.Empty') {
             return '\Google\Protobuf\GPBEmpty';
         }
 
